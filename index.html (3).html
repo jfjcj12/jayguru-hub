@@ -1,0 +1,428 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Jayguru Hub</title>
+<style>
+:root{--navy:#102b4e;--teal:#0c9b91;--bg:#f2f5f9;--white:#fff;--red:#d94343}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);font-family:Arial,sans-serif;color:#263447}
+header{background:var(--navy);color:white;padding:18px}
+header h2{margin:0}header small{color:#c9d8e8}
+nav{display:flex;gap:7px;overflow:auto;background:white;padding:10px;position:sticky;top:0;z-index:2}
+nav button{white-space:nowrap;border:0;background:#e9eef5;padding:11px 14px;border-radius:7px;color:var(--navy);font-weight:bold}
+nav button.active{background:var(--teal);color:white}
+main{max-width:1100px;margin:auto;padding:15px}
+.page{display:none}.page.active{display:block}
+.card{background:white;border-radius:10px;padding:16px;margin-bottom:14px;box-shadow:0 2px 8px #142b4e12}
+h3{margin-top:0;color:var(--navy)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat{background:white;padding:17px;border-radius:10px;border-left:4px solid var(--teal)}
+.stat strong{display:block;font-size:23px;margin-top:8px;color:var(--navy)}
+label{display:block;font-size:13px;font-weight:bold;margin:10px 0 5px}
+input,select{width:100%;padding:11px;border:1px solid #ccd5df;border-radius:7px;background:white;font-size:15px}
+button{cursor:pointer}
+.btn{border:0;border-radius:7px;padding:11px 15px;background:var(--teal);color:white;font-weight:bold;margin:5px 3px 5px 0}
+.btn.dark{background:var(--navy)}.btn.red{background:var(--red)}.btn.gray{background:#687789}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 7px;text-align:left;border-bottom:1px solid #e5eaf0}
+th{background:#edf2f7;color:var(--navy)}
+.tablewrap{overflow-x:auto}
+.total{font-size:19px;font-weight:bold;color:var(--navy)}
+.actions{white-space:nowrap}
+.note{font-size:12px;color:#64748b}
+@media(max-width:600px){main{padding:9px}.card{padding:12px}th,td{padding:8px 5px;font-size:12px}}
+@media print{
+body{background:white}header,nav,.no-print{display:none!important}
+main{padding:0}.page{display:none!important}#printArea{display:block!important}
+}
+</style>
+</head>
+<body>
+
+<header>
+<h2>The Jayguru Hub</h2>
+<small>Billing & Digital Service Management</small>
+</header>
+
+<nav class="no-print">
+<button class="active" onclick="showPage('dashboard',this)">Dashboard</button>
+<button onclick="showPage('billing',this)">Billing</button>
+<button onclick="showPage('services',this)">Digital Services</button>
+<button onclick="showPage('products',this)">General Store</button>
+<button onclick="showPage('history',this)">Bill History</button>
+<button onclick="showPage('backup',this)">Backup</button>
+</nav>
+
+<main>
+
+<section id="dashboard" class="page active">
+<h3>Dashboard</h3>
+<div class="grid">
+<div class="stat">Today's Bills<strong id="todayBills">0</strong></div>
+<div class="stat">Today's Sales<strong id="todaySales">₹0</strong></div>
+<div class="stat">Pending Due<strong id="pendingDue">₹0</strong></div>
+<div class="stat">Total Bills<strong id="allBills">0</strong></div>
+</div>
+<div class="card">
+<h3>Welcome to The Jayguru Hub</h3>
+<p>Manage your digital services, general store products, bills and customer payments.</p>
+<button class="btn" onclick="showPage('billing')">Create New Bill</button>
+</div>
+</section>
+
+<section id="billing" class="page">
+<div class="card">
+<h3>Create New Bill</h3>
+<div class="grid">
+<div><label>Customer Name</label><input id="customer" placeholder="Customer name"></div>
+<div><label>Mobile Number</label><input id="mobile" type="tel" placeholder="Mobile number"></div>
+</div>
+<hr>
+<h3>Add Item</h3>
+<div class="grid">
+<div><label>Category</label>
+<select id="category" onchange="loadItems()">
+<option value="Digital Services">Digital Services</option>
+<option value="General Store">General Store</option>
+</select></div>
+<div><label>Select Item</label><select id="itemSelect" onchange="selectItem()"></select></div>
+<div><label>Quantity</label><input id="qty" type="number" min="1" value="1"></div>
+<div><label>Rate (₹)</label><input id="rate" type="number" min="0" step="0.01"></div>
+</div>
+<button class="btn" onclick="addItem()">Add Item</button>
+</div>
+
+<div class="card">
+<h3>Bill Items</h3>
+<div class="tablewrap">
+<table>
+<thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Action</th></tr></thead>
+<tbody id="cartRows"><tr><td colspan="5">No items added</td></tr></tbody>
+</table>
+</div>
+<div class="grid">
+<div><label>Discount (₹)</label><input id="discount" type="number" min="0" value="0" oninput="updateTotal()"></div>
+<div><label>Amount Received (₹)</label><input id="received" type="number" min="0" value="0" oninput="updateTotal()"></div>
+<div><label>Payment Method</label>
+<select id="payment">
+<option>Cash</option><option>Card</option><option>Bank Transfer</option><option>Due</option>
+</select></div>
+</div>
+<p>Subtotal: <strong id="subtotal">₹0.00</strong></p>
+<p>Discount: <strong id="discountShow">₹0.00</strong></p>
+<p class="total">Grand Total: <span id="grandTotal">₹0.00</span></p>
+<p>Received: <strong id="receivedShow">₹0.00</strong></p>
+<p class="total">Balance Due: <span id="dueShow">₹0.00</span></p>
+<button class="btn" onclick="saveBill()">Save Bill</button>
+<button class="btn gray" onclick="clearBill()">Clear Bill</button>
+</div>
+</section>
+
+<section id="services" class="page">
+<div class="card">
+<h3>Digital Services</h3>
+<p class="note">Add, edit or delete your service names and rates.</p>
+<div class="grid">
+<div><label>Service Name</label><input id="serviceName" placeholder="Service name"></div>
+<div><label>Rate (₹)</label><input id="serviceRate" type="number" min="0" placeholder="Rate"></div>
+</div>
+<button class="btn" onclick="addService()">Add Service</button>
+<div class="tablewrap"><table>
+<thead><tr><th>Service</th><th>Rate</th><th>Actions</th></tr></thead>
+<tbody id="serviceRows"></tbody>
+</table></div>
+</div>
+</section>
+
+<section id="products" class="page">
+<div class="card">
+<h3>General Store Products</h3>
+<div class="grid">
+<div><label>Product Name</label><input id="productName" placeholder="Product name"></div>
+<div><label>Cost Price (₹)</label><input id="costPrice" type="number" min="0" placeholder="Purchase price"></div>
+<div><label>Selling Price (₹)</label><input id="sellingPrice" type="number" min="0" placeholder="Selling price"></div>
+<div><label>Stock Quantity</label><input id="stockQty" type="number" min="0" placeholder="Stock"></div>
+</div>
+<button class="btn" onclick="addProduct()">Add Product</button>
+<div class="tablewrap"><table>
+<thead><tr><th>Product</th><th>Cost</th><th>Selling</th><th>Stock</th><th>Actions</th></tr></thead>
+<tbody id="productRows"></tbody>
+</table></div>
+</div>
+</section>
+
+<section id="history" class="page">
+<div class="card">
+<h3>Bill History</h3>
+<div class="tablewrap"><table>
+<thead><tr><th>Bill No.</th><th>Date</th><th>Customer</th><th>Total</th><th>Received</th><th>Due</th><th>Action</th></tr></thead>
+<tbody id="historyRows"></tbody>
+</table></div>
+</div>
+</section>
+
+<section id="backup" class="page">
+<div class="card">
+<h3>Backup & Restore</h3>
+<p>Download a backup of your services, products and bills. Keep the JSON file safe.</p>
+<button class="btn" onclick="backupData()">Download Backup</button>
+<hr>
+<label>Restore Backup (JSON file)</label>
+<input id="restoreFile" type="file" accept=".json,application/json">
+<button class="btn dark" onclick="restoreData()">Restore Backup</button>
+<p class="note">Restoring a backup replaces the current saved app data.</p>
+</div>
+</section>
+
+<section id="printArea" style="display:none"></section>
+</main>
+
+<script>
+const KEY="jayguru_hub_data_v1";
+
+const defaultServices=[
+{name:"PAN Card New",rate:200},
+{name:"PAN Correction",rate:150},
+{name:"Voter ID",rate:100},
+{name:"Passport Application",rate:500},
+{name:"Driving Licence",rate:300}
+];
+
+let data=loadData();
+let cart=[];
+
+function loadData(){
+ try{
+  const saved=JSON.parse(localStorage.getItem(KEY));
+  if(saved && Array.isArray(saved.services) && Array.isArray(saved.products) && Array.isArray(saved.bills)) return saved;
+ }catch(e){}
+ return {services:defaultServices,products:[],bills:[]};
+}
+function persist(){localStorage.setItem(KEY,JSON.stringify(data))}
+function money(n){return "₹"+Number(n||0).toFixed(2)}
+function esc(s){
+ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function showPage(id,btn){
+ document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
+ document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
+ if(btn)btn.classList.add("active");
+ if(id==="billing")loadItems();
+ renderAll();
+}
+function renderAll(){
+ renderServices();renderProducts();renderHistory();renderDashboard();
+}
+function loadItems(){
+ const cat=document.getElementById("category").value;
+ const list=cat==="Digital Services"?data.services:data.products;
+ const sel=document.getElementById("itemSelect");
+ sel.innerHTML='<option value="">Select item</option>';
+ list.forEach((x,i)=>{
+  const o=document.createElement("option");
+  o.value=i;o.textContent=x.name+(cat==="General Store"?" (Stock: "+x.stock+")":"");
+  sel.appendChild(o);
+ });
+ document.getElementById("rate").value="";
+}
+function selectItem(){
+ const cat=document.getElementById("category").value;
+ const i=Number(document.getElementById("itemSelect").value);
+ const list=cat==="Digital Services"?data.services:data.products;
+ if(list[i])document.getElementById("rate").value=list[i].rate;
+}
+function addItem(){
+ const cat=document.getElementById("category").value;
+ const i=document.getElementById("itemSelect").value;
+ const list=cat==="Digital Services"?data.services:data.products;
+ const item=list[Number(i)];
+ const qty=Number(document.getElementById("qty").value);
+ const rate=Number(document.getElementById("rate").value);
+ if(!item || i===""){alert("Please select an item.");return}
+ if(!Number.isFinite(qty)||qty<=0||!Number.isFinite(rate)||rate<0){alert("Enter a valid quantity and rate.");return}
+ if(cat==="General Store" && qty>item.stock){alert("Not enough stock available.");return}
+ cart.push({name:item.name,category:cat,qty,rate,amount:qty*rate,productIndex:cat==="General Store"?Number(i):null});
+ document.getElementById("qty").value=1;
+ renderCart();
+}
+function renderCart(){
+ const body=document.getElementById("cartRows");
+ if(!cart.length){body.innerHTML='<tr><td colspan="5">No items added</td></tr>';updateTotal();return}
+ body.innerHTML=cart.map((x,i)=>`<tr><td>${esc(x.name)}</td><td>${x.qty}</td><td>${money(x.rate)}</td><td>${money(x.amount)}</td><td><button class="btn red" onclick="removeCart(${i})">Remove</button></td></tr>`).join("");
+ updateTotal();
+}
+function removeCart(i){cart.splice(i,1);renderCart()}
+function totals(){
+ const subtotal=cart.reduce((s,x)=>s+x.amount,0);
+ const discount=Math.max(0,Number(document.getElementById("discount").value)||0);
+ const total=Math.max(0,subtotal-discount);
+ const received=Math.max(0,Number(document.getElementById("received").value)||0);
+ return {subtotal,discount,total,received,due:Math.max(0,total-received)};
+}
+function updateTotal(){
+ const t=totals();
+ document.getElementById("subtotal").textContent=money(t.subtotal);
+ document.getElementById("discountShow").textContent=money(t.discount);
+ document.getElementById("grandTotal").textContent=money(t.total);
+ document.getElementById("receivedShow").textContent=money(t.received);
+ document.getElementById("dueShow").textContent=money(t.due);
+}
+function clearBill(){
+ cart=[];
+ ["customer","mobile"].forEach(id=>document.getElementById(id).value="");
+ document.getElementById("discount").value=0;
+ document.getElementById("received").value=0;
+ document.getElementById("payment").value="Cash";
+ document.getElementById("qty").value=1;
+ renderCart();
+}
+function saveBill(){
+ if(!cart.length){alert("Add at least one item.");return}
+ const customer=document.getElementById("customer").value.trim();
+ const mobile=document.getElementById("mobile").value.trim();
+ const t=totals();
+ if(!Number.isFinite(t.discount)||t.discount>t.subtotal){alert("Discount cannot exceed subtotal.");return}
+ if(!Number.isFinite(t.received)||t.received>t.total){alert("Received amount cannot exceed grand total.");return}
+ for(const x of cart){
+  if(x.category==="General Store"){
+   const p=data.products[x.productIndex];
+   if(!p||p.stock<x.qty){alert("Stock changed. Please check product stock.");return}
+  }
+ }
+ cart.forEach(x=>{
+  if(x.category==="General Store")data.products[x.productIndex].stock-=x.qty;
+ });
+ const bill={
+  id:"JH-"+Date.now(),
+  date:new Date().toISOString(),
+  customer,mobile,
+  items:cart.map(x=>({...x})),
+  subtotal:t.subtotal,discount:t.discount,total:t.total,
+  received:t.received,due:t.due,
+  payment:document.getElementById("payment").value
+ };
+ data.bills.unshift(bill);
+ persist();renderAll();
+ clearBill();
+ alert("Bill saved successfully.");
+ printBill(bill.id);
+}
+function addService(){
+ const name=document.getElementById("serviceName").value.trim();
+ const rate=Number(document.getElementById("serviceRate").value);
+ if(!name||!Number.isFinite(rate)||rate<0){alert("Enter a service name and valid rate.");return}
+ data.services.push({name,rate});persist();
+ document.getElementById("serviceName").value="";
+ document.getElementById("serviceRate").value="";
+ renderAll();loadItems();
+}
+function editService(i){
+ const x=data.services[i];
+ const name=prompt("Service name:",x.name);
+ if(name===null)return;
+ const rate=prompt("Rate:",x.rate);
+ if(rate===null)return;
+ const n=Number(rate);
+ if(!name.trim()||!Number.isFinite(n)||n<0){alert("Invalid details.");return}
+ data.services[i]={name:name.trim(),rate:n};persist();renderAll();loadItems();
+}
+function deleteService(i){
+ if(confirm("Delete this service?")){data.services.splice(i,1);persist();renderAll();loadItems()}
+}
+function renderServices(){
+ document.getElementById("serviceRows").innerHTML=data.services.map((x,i)=>
+ `<tr><td>${esc(x.name)}</td><td>${money(x.rate)}</td><td class="actions"><button class="btn gray" onclick="editService(${i})">Edit</button><button class="btn red" onclick="deleteService(${i})">Delete</button></td></tr>`
+ ).join("")||'<tr><td colspan="3">No services added</td></tr>';
+}
+function addProduct(){
+ const name=document.getElementById("productName").value.trim();
+ const cost=Number(document.getElementById("costPrice").value);
+ const rate=Number(document.getElementById("sellingPrice").value);
+ const stock=Number(document.getElementById("stockQty").value);
+ if(!name||!Number.isFinite(cost)||cost<0||!Number.isFinite(rate)||rate<0||!Number.isInteger(stock)||stock<0){alert("Enter valid product details and whole-number stock.");return}
+ data.products.push({name,cost,rate,stock});persist();
+ ["productName","costPrice","sellingPrice","stockQty"].forEach(id=>document.getElementById(id).value="");
+ renderAll();loadItems();
+}
+function editProduct(i){
+ const x=data.products[i];
+ const name=prompt("Product name:",x.name);if(name===null)return;
+ const cost=prompt("Cost price:",x.cost);if(cost===null)return;
+ const rate=prompt("Selling price:",x.rate);if(rate===null)return;
+ const stock=prompt("Stock quantity:",x.stock);if(stock===null)return;
+ const c=Number(cost),r=Number(rate),s=Number(stock);
+ if(!name.trim()||!Number.isFinite(c)||c<0||!Number.isFinite(r)||r<0||!Number.isInteger(s)||s<0){alert("Invalid product details.");return}
+ data.products[i]={name:name.trim(),cost:c,rate:r,stock:s};persist();renderAll();loadItems();
+}
+function deleteProduct(i){
+ if(confirm("Delete this product?")){data.products.splice(i,1);persist();renderAll();loadItems()}
+}
+function renderProducts(){
+ document.getElementById("productRows").innerHTML=data.products.map((x,i)=>
+ `<tr><td>${esc(x.name)}</td><td>${money(x.cost)}</td><td>${money(x.rate)}</td><td>${x.stock}</td><td class="actions"><button class="btn gray" onclick="editProduct(${i})">Edit</button><button class="btn red" onclick="deleteProduct(${i})">Delete</button></td></tr>`
+ ).join("")||'<tr><td colspan="5">No products added</td></tr>';
+}
+function renderHistory(){
+ document.getElementById("historyRows").innerHTML=data.bills.map(b=>
+ `<tr><td>${esc(b.id)}</td><td>${new Date(b.date).toLocaleDateString()}</td><td>${esc(b.customer||"Walk-in")}</td><td>${money(b.total)}</td><td>${money(b.received)}</td><td>${money(b.due)}</td><td><button class="btn" onclick="printBill('${esc(b.id)}')">Print</button></td></tr>`
+ ).join("")||'<tr><td colspan="7">No bills saved</td></tr>';
+}
+function renderDashboard(){
+ const today=new Date().toDateString();
+ const bills=data.bills.filter(b=>new Date(b.date).toDateString()===today);
+ document.getElementById("todayBills").textContent=bills.length;
+ document.getElementById("todaySales").textContent=money(bills.reduce((s,b)=>s+b.total,0));
+ document.getElementById("pendingDue").textContent=money(data.bills.reduce((s,b)=>s+b.due,0));
+ document.getElementById("allBills").textContent=data.bills.length;
+}
+function printBill(id){
+ const b=data.bills.find(x=>x.id===id);if(!b)return;
+ const area=document.getElementById("printArea");
+ area.innerHTML=`
+ <div style="max-width:700px;margin:20px auto;font-family:Arial;color:#111">
+ <h2 style="text-align:center">The Jayguru Hub</h2>
+ <p style="text-align:center">Bill Receipt</p><hr>
+ <p><b>Bill No:</b> ${esc(b.id)}<br><b>Date:</b> ${new Date(b.date).toLocaleString()}<br>
+ <b>Customer:</b> ${esc(b.customer||"Walk-in")}<br><b>Mobile:</b> ${esc(b.mobile||"-")}</p>
+ <table style="width:100%;border-collapse:collapse" border="1" cellpadding="8">
+ <tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th></tr>
+ ${b.items.map(x=>`<tr><td>${esc(x.name)}</td><td>${x.qty}</td><td>${money(x.rate)}</td><td>${money(x.amount)}</td></tr>`).join("")}
+ </table>
+ <p>Subtotal: ${money(b.subtotal)}<br>Discount: ${money(b.discount)}<br>
+ <b>Grand Total: ${money(b.total)}</b><br>Received: ${money(b.received)}<br>
+ <b>Due: ${money(b.due)}</b><br>Payment: ${esc(b.payment)}</p>
+ <hr><p style="text-align:center">Thank you for visiting The Jayguru Hub!</p>
+ </div>`;
+ window.print();
+}
+function backupData(){
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;a.download="Jayguru-Hub-Backup.json";a.click();
+ URL.revokeObjectURL(url);
+}
+function restoreData(){
+ const file=document.getElementById("restoreFile").files[0];
+ if(!file){alert("Choose a backup JSON file.");return}
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const d=JSON.parse(reader.result);
+   if(!d||!Array.isArray(d.services)||!Array.isArray(d.products)||!Array.isArray(d.bills))throw new Error("Invalid backup");
+   if(!confirm("Replace current data with this backup?"))return;
+   data=d;persist();cart=[];renderAll();loadItems();
+   alert("Backup restored successfully.");
+  }catch(e){alert("Invalid backup file.");}
+ };
+ reader.readAsText(file);
+}
+loadItems();
+renderAll();
+</script>
+</body>
+</html>
