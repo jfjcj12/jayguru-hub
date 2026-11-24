@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -146,12 +147,14 @@ function addStaff(){
 
 function addSalary(){
  const staff=db.staff.find(s=>String(s.id)===$("salaryStaff").value);
+ const date=$("salaryDate").value;
  const income=Number($("income").value||0);
- const salary=Number($("salary").value);
+ const salaryInput=$("salary").value.trim();
+ const salary=Number(salaryInput);
  const advance=Number($("advance").value||0);
  const deduction=Number($("deduction").value||0);
 
- if(!staff || !date || !Number.isFinite(salary) ||
+ if(!staff || !date || salaryInput==="" || !Number.isFinite(salary) ||
     salary<0 || !Number.isFinite(income) || income<0 ||
     !Number.isFinite(advance) || advance<0 ||
     !Number.isFinite(deduction) || deduction<0 ||
@@ -283,8 +286,14 @@ function exportCSV(){
  URL.revokeObjectURL(url);
 }
 
-$("salaryDate").value=new Date().toISOString().slice(0,10);
-$("month").value=new Date().toISOString().slice(0,7);
+const today=new Date();
+const localDate=[
+ today.getFullYear(),
+ String(today.getMonth()+1).padStart(2,"0"),
+ String(today.getDate()).padStart(2,"0")
+].join("-");
+$("salaryDate").value=localDate;
+$("month").value=localDate.slice(0,7);
 render();
 </script>
 
