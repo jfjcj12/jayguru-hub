@@ -146,7 +146,9 @@ function addStaff(){
 }
 
 function addSalary(){
- const staff=db.staff.find(s=>String(s.id)===$("salaryStaff").value);
+ const staff=db.staff.find(s=>
+  String(s.id)===$("salaryStaff").
+  value);
  const date=$("salaryDate").value;
  const income=Number($("income").value||0);
  const salaryInput=$("salary").value.trim();
