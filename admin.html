@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Jayguru Hub - Admin Panel</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;
+ font-family:Arial,sans-serif;
+ background:#f1f5f9;
+ color:#1e293b;
+}
+header{
+ background:#172554;
+ color:white;
+ padding:20px;
+}
+header h2{margin:0}
+.container{
+ max-width:1100px;
+ margin:auto;
+ padding:18px;
+}
+.card,.section,.login{
+ background:white;
+ padding:20px;
+ border-radius:12px;
+ box-shadow:0 2px 12px #0001;
+ margin-bottom:15px;
+}
+input,select{
+ width:100%;
+ padding:12px;
+ margin:8px 0;
+ border:1px solid #cbd5e1;
+ border-radius:7px;
+}
+button{
+ background:#2563eb;
+ color:white;
+ border:0;
+ padding:11px 16px;
+ border-radius:7px;
+ cursor:pointer;
+ margin:4px;
+}
+button:hover{background:#1d4ed8}
+.logout,.delete{background:#dc2626}
+.menu{margin:15px 0}
+.cards{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+ gap:12px;
+}
+.card h3{
+ font-size:14px;
+ color:#64748b;
+}
+.card strong{
+ font-size:25px;
+ color:#2563eb;
+}
+.section{display:none}
+table{
+ width:100%;
+ border-collapse:collapse;
+ margin-top:15px;
+ background:white;
+}
+th,td{
+ padding:10px;
+ border-bottom:1px solid #ddd;
+ text-align:left;
+}
+.table-wrap{overflow-x:auto}
+.error{color:red}
+.small{font-size:12px;color:#64748b}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>THE JAYGURU HUB</h2>
+<p>Admin Management System</p>
+</header>
+
+<div class="container">
+
+<!-- LOGIN -->
+<div id="loginBox" class="login">
+<h2>Admin Login</h2>
+<input id="username" placeholder="Username">
+<input id="password" type="password" placeholder="Password">
+<button onclick="loginAdmin()">Login</button>
+<p id="error" class="error"></p>
+<p class="small">Demo Login: admin / jayguru123</p>
+</div>
+
+<!-- ADMIN -->
+<div id="adminPanel" style="display:none">
+
+<h2>Welcome, Admin</h2>
+<button class="logout" onclick="logout()">Logout</button>
+
+<div class="menu">
+<button onclick="showPage('dashboard')">Dashboard</button>
+<button onclick="showPage('customers')">Customers</button>
+<button onclick="showPage('billing')">Billing</button>
+<button onclick="showPage('finance')">Income / Expense</button>
+<button onclick="showPage('staff')">Staff</button>
+<button onclick="showPage('reports')">Reports</button>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard" class="section">
+<h2>Dashboard Overview</h2>
+
+<div class="cards">
+<div class="card">
+<h3>Total Customers</h3>
+<strong id="customerCount">0</strong>
+</div>
+
+<div class="card">
+<h3>Total Bills</h3>
+<strong id="billCount">0</strong>
+</div>
+
+<div class="card">
+<h3>Total Income</h3>
+<strong id="incomeCount">₹0</strong>
+</div>
+
+<div class="card">
+<h3>Total Expenses</h3>
+<strong id="expenseCount">₹0</strong>
+</div>
+
+<div class="card">
+<h3>Net Balance</h3>
+<strong id="balanceCount">₹0</strong>
+</div>
+</div>
+</div>
+
+<!-- CUSTOMERS -->
+<div id="customers" class="section">
+<h2>Customer Management</h2>
+
+<input id="customerName" placeholder="Customer Name">
+<input id="customerPhone" placeholder="Mobile Number">
+
+<button onclick="addCustomer()">Add Customer</button>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Mobile</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="customerList"></tbody>
+</table>
+</div>
+</div>
+
+<!-- BILLING -->
+<div id="billing" class="section">
+<h2>Create New Bill</h2>
+
+<input id="billCustomer" placeholder="Customer Name">
+<input id="billPhone" placeholder="Customer Mobile">
+<input id="billService" placeholder="Service Name">
+<input id="billAmount" type="number" min="0" placeholder="Amount ₹">
+
+<select id="billGST">
+<option value="0">GST 0%</option>
+<option value="5">GST 5%</option>
+<option value="12">GST 12%</option>
+<option value="18">GST 18%</option>
+</select>
+
+<button onclick="addBill()">Save Bill</button>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Bill No.</th>
+<th>Customer</th>
+<th>Service</th>
+<th>Total</th>
+<th>Date</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="billList"></tbody>
+</table>
+</div>
+</div>
+
+<!-- INCOME / EXPENSE -->
+<div id="finance" class="section">
+<h2>Income / Expense Management</h2>
+
+<input id="moneyAmount" type="number" min="0" placeholder="Amount ₹">
+<input id="moneyNote" placeholder="Description">
+
+<button onclick="addMoney('income')">Add Income</button>
+<button onclick="addMoney('expense')">Add Expense</button>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Description</th>
+<th>Amount</th>
+<th>Date</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="moneyList"></tbody>
+</table>
+</div>
+</div>
+
+<!-- STAFF -->
+<div id="staff" class="section">
+<h2>Staff Management</h2>
+
+<input id="staffName" placeholder="Staff Name">
+<input id="staffPhone" placeholder="Staff Mobile">
+<input id="staffSalary" type="number" min="0" placeholder="Monthly Salary ₹">
+
+<button onclick="addStaff()">Add Staff</button>
+
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Mobile</th>
+<th>Salary</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody id="staffList"></tbody>
+</table>
+</div>
+</div>
+
+<!-- REPORTS -->
+<div id="reports" class="section">
+<h2>Business Reports</h2>
+
+<div class="cards">
+<div class="card">
+<h3>Total Income</h3>
+<strong id="reportIncome">₹0</strong>
+</div>
+<div class="card">
+<h3>Total Expense</h3>
+<strong id="reportExpense">₹0</strong>
+</div>
+<div class="card">
+<h3>Profit / Balance</h3>
+<strong id="reportBalance">₹0</strong>
+</div>
+</div>
+
+<button onclick="downloadReport()">Download CSV Report</button>
+<button onclick="window.print()">Print Report</button>
+</div>
+
+</div>
+</div>
+
+<script>
+
+// DATABASE
+const defaultData = {
+ customers:[],
+ bills:[],
+ money:[],
+ staff:[]
+};
+
+let db;
+
+try {
+ db=JSON.parse(localStorage.getItem("jayguruDB")) || defaultData;
+ if(!db.customers || !db.bills || !db.money || !db.staff)
+ db=defaultData;
+} catch(e) {
+ db=defaultData;
+}
+
+function saveData(){
+ localStorage.setItem("jayguruDB",JSON.stringify(db));
+ updateDashboard();
+ renderAll();
+}
+
+// SAFE TEXT
+function esc(value){
+ return String(value ?? "").replace(/[&<>"']/g,
+ c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+function money(value){
+ return "₹"+Number(value || 0).toFixed(2);
+}
+
+// LOGIN
+function loginAdmin(){
+ const u=document.getElementById("username").value;
+ const p=document.getElementById("password").value;
+
+ if(u==="admin" && p==="jayguru123"){
+ sessionStorage.setItem("jayguruLogin","yes");
+ openAdmin();
+ }else{
+ document.getElementById("error").textContent="Wrong username or password!";
+ }
+}
+
+function openAdmin(){
+ document.getElementById("loginBox").style.display="none";
+ document.getElementById("adminPanel").style.display="block";
+ updateDashboard();
+ renderAll();
+}
+
+function logout(){
+ sessionStorage.removeItem("jayguruLogin");
+ location.reload();
+}
+
+// PAGE NAVIGATION
+function showPage(page){
+ document.querySelectorAll(".section").forEach(s=>{
+ s.style.display="none";
+ });
+ document.getElementById(page).style.display="block";
+}
+
+// CUSTOMERS
+function addCustomer(){
+ const name=document.getElementById("customerName").value.trim();
+ const phone=document.getElementById("customerPhone").value.trim();
+
+ if(!name || !phone){
+ alert("Enter customer name and mobile number");
+ return;
+ }
+
+ db.customers.push({
+ name,phone
+ });
+
+ document.getElementById("customerName").value="";
+ document.getElementById("customerPhone").value="";
+
+ saveData();
+}
+
+function deleteCustomer(i){
+ if(confirm("Delete this customer?")){
+ db.customers.splice(i,1);
+ saveData();
+ }
+}
+
+// BILLING
+function addBill(){
+ const customer=document.getElementById("billCustomer").value.trim();
+ const phone=document.getElementById("billPhone").value.trim();
+ const service=document.getElementById("billService").value.trim();
+ const amount=Number(document.getElementById("billAmount").value);
+ const gst=Number(document.getElementById("billGST").value);
+
+ if(!customer || !service || !Number.isFinite(amount) || amount<=0){
+ alert("Enter valid customer, service and amount");
+ return;
+ }
+
+ const total=amount+(amount*gst/100);
+
+ const bill={
+ id:Date.now(),
+ customer,phone,service,
+ amount,gst,total,
+ date:new Date().toLocaleDateString("en-IN")
+ };
+
+ db.bills.push(bill);
+ db.money.push({
+ type:"income",
+ note:"Bill #"+bill.id+" - "+service,
+ amount:total,
+ date:bill.date
+ });
+
+ document.getElementById("billCustomer").value="";
+ document.getElementById("billPhone").value="";
+ document.getElementById("billService").value="";
+ document.getElementById("billAmount").value="";
+
+ saveData();
+ printBill(bill);
+}
+
+function deleteBill(i){
+ if(confirm("Delete this bill?")){
+ db.bills.splice(i,1);
+ saveData();
+ }
+}
+
+// PRINT BILL
+function printBill(b){
+ const w=window.open("","_blank");
+ if(!w){
+ alert("Allow pop-ups to print the bill");
+ return;
+ }
+
+ w.document.write(`
+ <html><head><title>Jayguru Hub Invoice</title>
+ <style>
+ body{font-family:Arial;padding:30px}
+ h2{text-align:center}
+ hr{margin:20px 0}
+ table{width:100%;border-collapse:collapse}
+ td{padding:10px;border-bottom:1px solid #ddd}
+ </style></head><body>
+ <h2>THE JAYGURU HUB</h2>
+ <p style="text-align:center">Customer Service & Digital Services</p>
+ <hr>
+ <p>Bill No: ${esc(b.id)}</p>
+ <p>Date: ${esc(b.date)}</p>
+ <p>Customer: ${esc(b.customer)}</p>
+ <p>Mobile: ${esc(b.phone)}</p>
+ <table>
+ <tr><td>Service</td><td>${esc(b.service)}</td></tr>
+ <tr><td>Amount</td><td>${money(b.amount)}</td></tr>
+ <tr><td>GST (${b.gst}%)</td><td>${money(b.amount*b.gst/100)}</td></tr>
+ <tr><td><b>Total</b></td><td><b>${money(b.total)}</b></td></tr>
+ </table>
+ <hr>
+ <p style="text-align:center">Thank you for visiting The Jayguru Hub!</p>
+ <script>window.onload=()=>window.print();<\/script>
+ </body></html>
+ `);
+ w.document.close();
+}
+
+// FINANCE
+function addMoney(type){
+ const amount=Number(document.getElementById("moneyAmount").value);
+ const note=document.getElementById("moneyNote").value.trim();
+
+ if(!Number.isFinite(amount) || amount<=0 || !note){
+ alert("Enter valid amount and description");
+ return;
+ }
+
+ db.money.push({
+ type,note,amount,
+ date:new Date().toLocaleDateString("en-IN")
+ });
+
+ document.getElementById("moneyAmount").value="";
+ document.getElementById("moneyNote").value="";
+
+ saveData();
+}
+
+function deleteMoney(i){
+ if(confirm("Delete this entry?")){
+ db.money.splice(i,1);
+ saveData();
+ }
+}
+
+// STAFF
+function addStaff(){
+ const name=document.getElementById("staffName").value.trim();
+ const phone=document.getElementById("staffPhone").value.trim();
+ const salary=Number(document.getElementById("staffSalary").value);
+
+ if(!name || !phone || !Number.isFinite(salary) || salary<0){
+ alert("Enter valid staff details");
+ return;
+ }
+
+ db.staff.push({name,phone,salary});
+
+ document.getElementById("staffName").value="";
+ document.getElementById("staffPhone").value="";
+ document.getElementById("staffSalary").value="";
+
+ saveData();
+}
+
+function deleteStaff(i){
+ if(confirm("Delete this staff member?")){
+ db.staff.splice(i,1);
+ saveData();
+ }
+}
+
+// DASHBOARD
+function updateDashboard(){
+ const income=db.money
+ .filter(x=>x.type==="income")
+ .reduce((a,x)=>a+Number(x.amount),0);
+
+ const expense=db.money
+ .filter(x=>x.type==="expense")
+ .reduce((a,x)=>a+Number(x.amount),0);
+
+ const balance=income-expense;
+
+ document.getElementById("customerCount").textContent=db.customers.length;
+ document.getElementById("billCount").textContent=db.bills.length;
+ document.getElementById("incomeCount").textContent=money(income);
+ document.getElementById("expenseCount").textContent=money(expense);
+ document.getElementById("balanceCount").textContent=money(balance);
+
+ document.getElementById("reportIncome").textContent=money(income);
+ document.getElementById("reportExpense").textContent=money(expense);
+ document.getElementById("reportBalance").textContent=money(balance);
+}
+
+// DISPLAY TABLES
+function renderAll(){
+
+ document.getElementById("customerList").innerHTML=
+ db.customers.map((c,i)=>`
+ <tr>
+ <td>${esc(c.name)}</td>
+ <td>${esc(c.phone)}</td>
+ <td><button class="delete" onclick="deleteCustomer(${i})">Delete</button></td>
+ </tr>
+ `).join("");
+
+ document.getElementById("billList").innerHTML=
+ db.bills.map((b,i)=>`
+ <tr>
+ <td>${esc(b.id)}</td>
+ <td>${esc(b.customer)}</td>
+ <td>${esc(b.service)}</td>
+ <td>${money(b.total)}</td>
+ <td>${esc(b.date)}</td>
+ <td>
+ <button onclick="printBill(db.bills[${i}])">Print</button>
+ <button class="delete" onclick="deleteBill(${i})">Delete</button>
+ </td>
+ </tr>
+ `).join("");
+
+ document.getElementById("moneyList").innerHTML=
+ db.money.map((m,i)=>`
+ <tr>
+ <td>${esc(m.type)}</td>
+ <td>${esc(m.note)}</td>
+ <td>${money(m.amount)}</td>
+ <td>${esc(m.date)}</td>
+ <td><button class="delete" onclick="deleteMoney(${i})">Delete</button></td>
+ </tr>
+ `).join("");
+
+ document.getElementById("staffList").innerHTML=
+ db.staff.map((s,i)=>`
+ <tr>
+ <td>${esc(s.name)}</td>
+ <td>${esc(s.phone)}</td>
+ <td>${money(s.salary)}</td>
+ <td><button class="delete" onclick="deleteStaff(${i})">Delete</button></td>
+ </tr>
+ `).join("");
+}
+
+// CSV REPORT
+function downloadReport(){
+ const rows=[
+ ["Type","Name / Description","Amount","Date"],
+ ...db.bills.map(b=>["Bill",b.customer+" - "+b.service,b.total,b.date]),
+ ...db.money.map(m=>[m.type,m.note,m.amount,m.date])
+ ];
+
+ const csv=rows.map(row=>
+ row.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")
+ ).join("\r\n");
+
+ const blob=new Blob(["\uFEFF"+csv],{
+ type:"text/csv;charset=utf-8;"
+ });
+
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download="Jayguru-Hub-Report.csv";
+ a.click();
+ URL.revokeObjectURL(url);
+}
+
+// START
+if(sessionStorage.getItem("jayguruLogin")==="yes"){
+ openAdmin();
+}
+
+</script>
+
+</body>
+</html>
